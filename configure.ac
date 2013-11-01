@@ -310,6 +310,21 @@ fi
 
 
 dnl **************************************************************************
+dnl Documentation
+dnl **************************************************************************
+AC_PATH_PROG([XSLTPROC], [xsltproc])
+
+# gtkdocize greps for '^GTK_DOC_CHECK', so it needs to be on its own line
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.18],[--flavour no-tmpl])],
+	                [AM_CONDITIONAL([ENABLE_GTK_DOC], [false])
+		         enable_gtk_doc=no])
+AS_IF([test "x$enable_gtk_doc" = "xyes" -a "x$XSLTPROC" = x], [
+	AC_MSG_ERROR([*** GTK doc requested but xsltproc not found])
+])
+
+
+dnl **************************************************************************
 dnl Output
 dnl **************************************************************************
 AC_CONFIG_FILES([
@@ -317,6 +332,9 @@ AC_CONFIG_FILES([
 	bson/bson-version.h
 	bson/bson-config.h
 	bson/libbson-1.0.pc
+	doc/Makefile
+	doc/reference/Makefile
+	doc/reference/version.xml
 ])
 AC_OUTPUT
 
@@ -351,7 +369,8 @@ echo "  Prefix ....................: ${prefix}"
 echo "  Endianness ................: ${host_endianness}"
 echo "  Debug Level ...............: ${enable_debug}"
 echo "  CFLAGS ....................: ${CFLAGS}"
-echo "  Maintainer ................: ${enable_maintainer_flags}"
+echo "  Add Maintainer CFLAGS .....: ${enable_maintainer_flags}"
+echo "  API Documentation .........: ${enable_gtk_doc}"
 echo ""
 echo "Experimental Bindings"
 echo ""
