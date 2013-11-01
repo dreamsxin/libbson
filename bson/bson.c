@@ -28,6 +28,18 @@
 #endif
 
 
+/**
+ * SECTION:bson
+ * @title: BSON Documents
+ * @short_description: Creating and parsing BSON documents.
+ *
+ * This module contains everything you need to create and parse BSON
+ * documents.
+ *
+ * TODO
+ */
+
+
 typedef struct
 {
    bson_validate_flags_t flags;

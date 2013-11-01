@@ -19,6 +19,17 @@
 #define BSON_CONFIG_H
 
 
+/**
+ * SECTION:bson-config
+ * @title: Configuration
+ * @short_description: System configuration information.
+ *
+ * This module provides information on the host system that cannot be
+ * changed. Such information includes the system byte order (endianness)
+ * as well as basic operating system information.
+ */
+
+
 /*
  * BSON_BYTE_ORDER is used to define the current endianness.  If big endian, it
  * will be 4321. If little endian, it will be 1234.

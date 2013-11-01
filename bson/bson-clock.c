@@ -26,6 +26,19 @@
 
 
 /**
+ * SECTION:bson-clock
+ * @title: Clock and Timing
+ * @short_description: System clock and timing information.
+ *
+ * This module provides access to the host clock and timing information. This
+ * is useful if you need access to various timing information such as the
+ * system monotonic clock. A monotonic clock should be used when utilizing
+ * blocking socket operations like poll() so that clock drift such as
+ * performed by ntpdate does not create unexpected results.
+ */
+
+
+/**
  * bson_get_monotonic_time:
  *
  * Returns the monotonic system time, if available. A best effort is made to

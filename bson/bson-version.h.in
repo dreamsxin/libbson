@@ -25,6 +25,18 @@
 
 
 /**
+ * SECTION:bson-version
+ * @title: Versioning Macros
+ * @short_description: Macros to help with conditional compilation.
+ *
+ * If you need to support a feature that is only in certain versions of
+ * Libbson, the following versioning macros will be of use. They can be
+ * used by the preprocessor to condionally compile based on the Libbson
+ * version.
+ */
+
+
+/**
  * BSON_MAJOR_VERSION:
  *
  * BSON major version component (e.g. 1 if %BSON_VERSION is 1.2.3)
