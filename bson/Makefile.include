@@ -70,7 +70,8 @@ libbson_1_0_la_SOURCES = \
 libbson_1_0_la_CPPFLAGS = \
 	-DBSON_COMPILATION \
 	$(BSON_DEBUG_CFLAGS) \
-	$(MAINTAINER_CFLAGS)
+	$(MAINTAINER_CFLAGS) \
+	$(HARDEN_CFLAGS)
 
 
 libbson_1_0_la_LIBADD = \
@@ -80,6 +81,7 @@ libbson_1_0_la_LIBADD = \
 
 libbson_1_0_la_LDFLAGS = \
 	$(BSON_LT_LDFLAGS) \
+	$(HARDEN_LDFLAGS) \
 	-no-undefined \
 	-export-symbols-regex "^bson_" \
 	-rpath $(libdir)
