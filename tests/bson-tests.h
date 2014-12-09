@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 MongoDB Inc.
+ * Copyright 2013 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #define BSON_TESTS_H
 
 
-#include <bson/bson.h>
+#include <bson.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -47,21 +47,89 @@ BSON_BEGIN_DECLS
    } while (0)
 
 
-static void
+#ifdef BSON_OS_WIN32
+#include <stdarg.h>
+#include <share.h>
+static __inline int
+bson_open (const char *filename,
+           int flags,
+           ...)
+{
+   int fd = -1;
+   int mode = 0;
+
+   if (_sopen_s (&fd, filename, flags|_O_BINARY, _SH_DENYNO, _S_IREAD | _S_IWRITE) == NO_ERROR) {
+      return fd;
+   }
+
+   return -1;
+}
+# define bson_close _close
+# define bson_read(f,b,c) ((ssize_t)_read((f), (b), (int)(c)))
+# define bson_write _write
+#else
+# define bson_open open
+# define bson_read read
+# define bson_close close
+# define bson_write write
+#endif
+
+
+#define bson_eq_bson(bson,expected) \
+   do { \
+      char *bson_json, *expected_json; \
+      const uint8_t *bson_data = bson_get_data ((bson)); \
+      const uint8_t *expected_data = bson_get_data ((expected)); \
+      int unequal; \
+      unsigned o; \
+      int off = -1; \
+      unequal = ((expected)->len != (bson)->len) \
+                || memcmp (bson_get_data ((expected)), bson_get_data ( \
+                              (bson)), (expected)->len); \
+      if (unequal) { \
+         bson_json = bson_as_json (bson, NULL); \
+         expected_json = bson_as_json ((expected), NULL); \
+         for (o = 0; o < (bson)->len && o < (expected)->len; o++) { \
+            if (bson_data [o] != expected_data [o]) { \
+               off = o; \
+               break; \
+            } \
+         } \
+         if (off == -1) { \
+            off = MAX ((expected)->len, (bson)->len) - 1; \
+         } \
+         fprintf (stderr, "bson objects unequal (byte %u):\n(%s)\n(%s)\n", \
+                  off, bson_json, expected_json); \
+         { \
+            int fd1 = bson_open ("failure.bad.bson", O_RDWR | O_CREAT, 0640); \
+            int fd2 = bson_open ("failure.expected.bson", O_RDWR | O_CREAT, 0640); \
+            assert (fd1 != -1); \
+            assert (fd2 != -1); \
+            assert ((bson)->len == bson_write (fd1, bson_data, (bson)->len)); \
+            assert ((expected)->len == bson_write (fd2, expected_data, (expected)->len)); \
+            bson_close (fd1); \
+            bson_close (fd2); \
+         } \
+         assert (0); \
+      } \
+   } while (0)
+
+
+static BSON_INLINE void
 run_test (const char *name,
           void (*func) (void))
 {
    struct timeval begin;
    struct timeval end;
    struct timeval diff;
-   bson_int64_t usec;
+   long usec;
    double format;
 
    fprintf(stdout, "%-42s : ", name);
    fflush(stdout);
-   gettimeofday(&begin, NULL);
+   bson_gettimeofday(&begin);
    func();
-   gettimeofday(&end, NULL);
+   bson_gettimeofday(&end);
    fprintf(stdout, "PASS");
 
    diff.tv_sec = end.tv_sec - begin.tv_sec;

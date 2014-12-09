@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 MongoDB Inc.
+ * Copyright 2013 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,21 @@
 
 
 /*
- * This program will validate each BSON document contained in the provided
- * files.
+ * This program will validate each BSON document contained in the files provide
+ * as arguments to the program.  Each document from each file is read in
+ * sequence until a bad BSON document is found or there are no more documents
+ * to read.
+ *
+ * Try running it with:
+ *
+ * ./bson-validate tests/binary/overflow2.bson
+ * ./bson-validate tests/binary/trailingnull.bson
  */
 
 
 #include <bson.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 
 int
@@ -34,17 +39,17 @@ main (int   argc,
 {
    bson_reader_t *reader;
    const bson_t *b;
+   bson_error_t error;
    const char *filename;
    size_t offset;
    int docnum;
-   int fd;
    int i;
 
    /*
     * Print program usage if no arguments are provided.
     */
    if (argc == 1) {
-      fprintf(stderr, "usage: %s FILE...\n", argv[0]);
+      fprintf (stderr, "usage: %s FILE...\n", argv[0]);
       return 1;
    }
 
@@ -56,19 +61,13 @@ main (int   argc,
       docnum = 0;
 
       /*
-       * Open the filename provided in command line arguments.
-       */
-      errno = 0;
-      fd = open(filename, O_RDONLY);
-      if (fd == -1) {
-         fprintf(stderr, "Failed to open %s: %s\n", filename, strerror(errno));
-         continue;
-      }
-
-      /*
        * Initialize a new reader for this file descriptor.
        */
-      reader = bson_reader_new_from_fd(fd, TRUE);
+      if (!(reader = bson_reader_new_from_file (filename, &error))) {
+         fprintf (stderr, "Failed to open \"%s\": %s\n",
+                  filename, error.message);
+         continue;
+      }
 
       /*
        * Convert each incoming document to JSON and print to stdout.
@@ -77,13 +76,12 @@ main (int   argc,
          docnum++;
          if (!bson_validate(b,
                             (BSON_VALIDATE_UTF8 |
-                             BSON_VALIDATE_DOLLAR_KEYS |
-                             BSON_VALIDATE_DOT_KEYS |
                              BSON_VALIDATE_UTF8_ALLOW_NULL),
                             &offset)) {
             fprintf(stderr,
                     "Document %u in \"%s\" is invalid at offset %u.\n",
                     docnum, filename, (int)offset);
+            bson_reader_destroy (reader);
             return 1;
          }
       }

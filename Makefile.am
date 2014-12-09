@@ -1,30 +1,33 @@
 EXTRA_DIST =
 CLEANFILES =
 DISTCLEANFILES =
+MAINTAINERCLEANFILES =
 
-include bson/Makefile.include
-include tests/Makefile.include
-include examples/Makefile.include
-include doc/Makefile.include
+bin_PROGRAMS = 
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+noinst_PROGRAMS =
 
-if HAVE_PYTHON
-include bindings/python/Makefile.include
-endif
+include src/Makefile.am
+include tests/Makefile.am
+include examples/Makefile.am
+include doc/Makefile.am
 
-ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
-DISTCHECK_CONFIGURE_FLAGS = --enable-silent-rules
+# for various extra dist
+include build/cmake/Makefile.am
+
+ACLOCAL_AMFLAGS = -I build/autotools/m4 ${ACLOCAL_FLAGS}
+DISTCHECK_CONFIGURE_FLAGS = --enable-maintainer-flags --enable-silent-rules --enable-hardening --enable-optimizations --enable-html-docs --enable-man-pages --enable-yelp
 
 bsondocdir = ${docdir}
-bsondoc_DATA =
-bsondoc_DATA += COPYING
-bsondoc_DATA += NEWS
-bsondoc_DATA += README
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA =
-pkgconfig_DATA += $(top_builddir)/bson/libbson-1.0.pc
+bsondoc_DATA = \
+	COPYING \
+	NEWS \
+	README
 
 EXTRA_DIST += $(bsondoc_DATA)
+
+EXTRA_DIST += CMakeLists.txt
 
 dist-hook:
 	@if test -d "$(srcdir)/.git"; then                              \
@@ -39,3 +42,7 @@ dist-hook:
 
 uninstall-local:
 	-rm -r $(bsondocdir)
+
+dist-rpm: dist-gzip
+	cp libbson-$(BSON_VERSION).tar.gz ~/rpmbuild/SOURCES/
+	rpmbuild -bb build/rpm/libbson.spec

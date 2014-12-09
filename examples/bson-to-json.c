@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 MongoDB Inc.
+ * Copyright 2013 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@
 
 
 #include <bson.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 
 
 int
@@ -34,16 +31,18 @@ main (int   argc,
 {
    bson_reader_t *reader;
    const bson_t *b;
+   bson_error_t error;
    const char *filename;
    char *str;
-   int fd;
    int i;
 
    /*
     * Print program usage if no arguments are provided.
     */
    if (argc == 1) {
-      fprintf(stderr, "usage: %s FILE...\n", argv[0]);
+      fprintf(stderr,
+              "usage: %s [FILE | -]...\nUse - for STDIN.\n",
+              argv[0]);
       return 1;
    }
 
@@ -53,29 +52,20 @@ main (int   argc,
    for (i = 1; i < argc; i++) {
       filename = argv[i];
 
-      /*
-       * Open the filename provided in command line arguments.
-       */
-      if (0 == strcmp(filename, "-")) {
-         fd = STDIN_FILENO;
+      if (strcmp (filename, "-") == 0) {
+         reader = bson_reader_new_from_fd (STDIN_FILENO, false);
       } else {
-         errno = 0;
-         fd = open(filename, O_RDONLY);
-         if (fd == -1) {
-            fprintf(stderr, "Failed to open %s: %s\n", filename, strerror(errno));
+         if (!(reader = bson_reader_new_from_file (filename, &error))) {
+            fprintf (stderr, "Failed to open \"%s\": %s\n",
+                     filename, error.message);
             continue;
          }
       }
 
       /*
-       * Initialize a new reader for this file descriptor.
-       */
-      reader = bson_reader_new_from_fd(fd, TRUE);
-
-      /*
        * Convert each incoming document to JSON and print to stdout.
        */
-      while ((b = bson_reader_read(reader, NULL))) {
+      while ((b = bson_reader_read (reader, NULL))) {
          str = bson_as_json(b, NULL);
          fprintf(stdout, "%s\n", str);
          bson_free(str);
@@ -84,7 +74,7 @@ main (int   argc,
       /*
        * Cleanup after our reader, which closes the file descriptor.
        */
-      bson_reader_destroy(reader);
+      bson_reader_destroy (reader);
    }
 
    return 0;
